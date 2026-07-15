@@ -1,0 +1,51 @@
+name: Secure RDP Tunnel
+
+on:
+  workflow_dispatch:
+
+env:
+  # --- CUSTOMIZE THESE ---
+  RDP_USERNAME: USER
+  RDP_PASSWORD: Bonnierdp
+  # -----------------------
+
+jobs:
+  secure-rdp:
+    runs-on: windows-latest
+    timeout-minutes: 3600
+    steps:
+      - name: Configure RDP Settings
+        shell: powershell
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0 -Force
+          netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
+
+      - name: Create RDP User
+        shell: powershell
+        run: |
+          $securePass = ConvertTo-SecureString $env:RDP_PASSWORD -AsPlainText -Force
+          New-LocalUser -Name $env:RDP_USERNAME -Password $securePass -AccountNeverExpires
+          Add-LocalGroupMember -Group "Administrators" -Member $env:RDP_USERNAME
+
+      - name: Connect to Tailscale
+        uses: tailscale/gh-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:github-runner
+
+      - name: Connection Details
+        shell: powershell
+        run: |
+          Write-Host "`n========================================"
+          Write-Host "RDP Target IP: $(tailscale ip -4)"
+          Write-Host "Username     : $env:RDP_USERNAME"
+          Write-Host "Password     : $env:RDP_PASSWORD"
+          Write-Host "========================================`n"
+          
+          # Keep the runner alive
+          while ($true) {
+            Start-Sleep -Seconds 60
+            Write-Host "Runner active..."
+          }
