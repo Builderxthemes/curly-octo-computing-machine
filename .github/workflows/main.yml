@@ -4,10 +4,8 @@ on:
   workflow_dispatch:
 
 env:
-  # --- CUSTOMIZE THESE ---
-  RDP_USERNAME: USER
-  RDP_PASSWORD: Bonnierdp
-  # -----------------------
+  RDP_USERNAME: User
+  RDP_PASSWORD: bonnie
 
 jobs:
   secure-rdp:
@@ -29,7 +27,7 @@ jobs:
           Add-LocalGroupMember -Group "Administrators" -Member $env:RDP_USERNAME
 
       - name: Connect to Tailscale
-        uses: tailscale/gh-action@v2
+        uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
@@ -44,7 +42,6 @@ jobs:
           Write-Host "Password     : $env:RDP_PASSWORD"
           Write-Host "========================================`n"
           
-          # Keep the runner alive
           while ($true) {
             Start-Sleep -Seconds 60
             Write-Host "Runner active..."
