@@ -5,7 +5,7 @@ on:
 
 env:
   RDP_USERNAME: User
-  RDP_PASSWORD: bonnie
+  RDP_PASSWORD: Bonnie123!
 
 jobs:
   secure-rdp:
